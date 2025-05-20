@@ -11,15 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('jadwal', function (Blueprint $table) {
-            $table->id();
-            $table->string('nama');
-            $table->text('deskripsi')->nullable();
-            $table->dateTime('start_time');
-            $table->dateTime('end_time')->nullable();
-            $table->foreignId('proyek_id')->constrained('proyek')->onDelete('cascade');
-            $table->timestamps();
-        });
+            Schema::create('jadwal', function (Blueprint $table) {
+                $table->id();
+                $table->string('nama');
+                $table->text('deskripsi')->nullable();
+                $table->dateTime('start_time');
+                $table->dateTime('end_time')->nullable();
+                $table->foreignId('proyek_id')->constrained('proyek')->onDelete('cascade');
+                $table->timestamps();
+            });
     }
 
     /**

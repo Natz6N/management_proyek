@@ -15,7 +15,7 @@ interface Proyek {
     updated_at?: string;
     kategori?: {
         id: number;
-        name: string;
+        nama: string;
     };
 }
 
@@ -84,7 +84,7 @@ export default function Index({ proyeks }: IndexProps) {
                                                 {proyek.judul}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                {proyek.kategori?.name || '-'}
+                                                {proyek.kategori?.nama || '-'}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                                 {formatDate(proyek.start_date)}

@@ -55,6 +55,16 @@ export interface Proyek {
     end_date?: string | null; // date (YYYY-MM-DD) nullable
     created_at: string;
     updated_at: string;
+    // Additional fields for product display
+    harga?: number;
+    diskon?: number;
+    stok?: number;
+    spesifikasi?: {
+        [key: string]: string;
+    };
+    galeriImages?: string[];
+    fitur?: string[];
+    kategori?: KategoriProyek;
 }
 
 // Sesuai tabel 'kategori__proyeks'
@@ -62,6 +72,7 @@ export interface KategoriProyek {
     id: number;
     nama: string;
     deskripsi: string;
+    proyek_count?: number; // Added for withCount queries
 }
 
 // Sesuai tabel 'jadwal'

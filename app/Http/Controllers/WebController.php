@@ -78,12 +78,20 @@ class WebController extends Controller
         // Get related projects
         $relatedProyeks = Proyek::getRelated($proyek->id, $proyek->kategori_proyek_id);
 
+        // Get popular categories
+        $popularCategories = KategoriProyek::getPopular(6);
+
         // Log visitor
         VisitorLog::recordVisit('project', ['project_id' => $proyek->id]);
 
         return Inertia::render('InterfaceWeb/ShowProyek', [
             'proyek' => $proyek,
-            'relatedProyeks' => $relatedProyeks
+            'relatedProyeks' => $relatedProyeks,
+            'popularCategories' => $popularCategories,
+            'title' => $proyek->judul,
+            'auth' => [
+                'user' => auth()->user()
+            ]
         ]);
     }
 

@@ -106,4 +106,30 @@ class KategoriProyekService extends BaseService
     {
         return KategoriProyek::with('proyek')->find($id);
     }
+
+    /**
+     * Get popular categories based on the number of projects
+     * 
+     * @param int $limit
+     * @return Collection
+     */
+    public function getPopular(int $limit = 6): Collection
+    {
+        // First approach: get categories with the most projects
+        return KategoriProyek::withCount('proyek')
+            ->orderBy('proyek_count', 'desc')
+            ->limit($limit)
+            ->get();
+        
+        // Alternative approach using visitor logs if implemented
+        // return KategoriProyek::join('visitor_logs', function($join) {
+        //     $join->on('kategori_proyeks.id', '=', 'visitor_logs.metadata->category_id')
+        //         ->where('visitor_logs.path', '=', 'browse');
+        // })
+        // ->select('kategori_proyeks.*', \DB::raw('count(visitor_logs.id) as visits'))
+        // ->groupBy('kategori_proyeks.id')
+        // ->orderBy('visits', 'desc')
+        // ->limit($limit)
+        // ->get();
+    }
 }

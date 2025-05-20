@@ -5,8 +5,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\WebController;
 use App\Http\Controllers\DashboardController;
 
-Route::get('/', [WebController::class , 'index'])->name('home');
-
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('role:admin')->prefix('dashboard')->group(function () {
         // Main dashboard
@@ -46,10 +44,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         });
     });
 
-    Route::middleware('role:user')->group(function () {
-        // User routes here
-    });
+    // Route::middleware('role:user')->group(function () {
+    // });
 });
+Route::get('/', [WebController::class, 'index'])->name('home');
+Route::get('/browse', [WebController::class, 'browse'])->name('browse');
+Route::get('/show/{slug}', [WebController::class, 'showProyek'])->name('showProyek');
+Route::get('/showjadwal/{id}', [WebController::class, 'showJadwal'])->name('showJadwal');
+Route::post('/contact', [WebController::class, 'contact'])->name('contact');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

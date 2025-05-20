@@ -32,30 +32,60 @@ export default function Index({ categories }: IndexProps) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Manage Categories" />
             <div className="flex h-full flex-1 flex-col gap-4 p-4">
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold">Categories</h1>
                     <Link
                         href="/dashboard/categories/create"
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                        className="rounded-md bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
                     >
                         Add New Category
                     </Link>
                 </div>
 
-                <div className="bg-white dark:bg-neutral-800 rounded-lg shadow overflow-hidden">
+                <div className="overflow-hidden rounded-lg bg-white shadow dark:bg-neutral-800">
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead className="bg-gray-50 dark:bg-neutral-700">
                                 <tr>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">ID</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Description</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Slug</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Projects</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
+                                    >
+                                        ID
+                                    </th>
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
+                                    >
+                                        Name
+                                    </th>
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
+                                    >
+                                        Description
+                                    </th>
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
+                                    >
+                                        Slug
+                                    </th>
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
+                                    >
+                                        Projects
+                                    </th>
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
+                                    >
+                                        Actions
+                                    </th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-800 dark:divide-gray-700">
+                            <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-neutral-800">
                                 {categories.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
@@ -65,26 +95,24 @@ export default function Index({ categories }: IndexProps) {
                                 ) : (
                                     categories.map((category) => (
                                         <tr key={category.id}>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                {category.id}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                                            <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">{category.id}</td>
+                                            <td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white">
                                                 {category.nama}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                {category.deskripsi ?
-                                                    (category.deskripsi.length > 50 ?
-                                                        `${category.deskripsi.substring(0, 50)}...` :
-                                                        category.deskripsi)
+                                            <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+                                                {category.deskripsi
+                                                    ? category.deskripsi.length > 50
+                                                        ? `${category.deskripsi.substring(0, 50)}...`
+                                                        : category.deskripsi
                                                     : '-'}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                            <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
                                                 {category.slug || '-'}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                            <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
                                                 {category.project_count || 0}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 space-x-2">
+                                            <td className="space-x-2 px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
                                                 <Link
                                                     href={`/dashboard/categories/${category.id}`}
                                                     className="text-blue-600 hover:text-blue-900 dark:hover:text-blue-400"
@@ -107,7 +135,11 @@ export default function Index({ categories }: IndexProps) {
                                                         alert('Category deleted successfully!');
                                                     }}
                                                     onClick={(e) => {
-                                                        if (!confirm('Are you sure you want to delete this category? This will remove the category from all associated projects.')) {
+                                                        if (
+                                                            !confirm(
+                                                                'Are you sure you want to delete this category? This will remove the category from all associated projects.',
+                                                            )
+                                                        ) {
                                                             e.preventDefault();
                                                         }
                                                     }}
