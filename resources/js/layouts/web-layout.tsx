@@ -1,7 +1,7 @@
 import Natz from '@/components/ui/natzLogo';
-import { Head } from '@inertiajs/react';
-import { Search } from 'lucide-react';
-import React, { KeyboardEvent, MouseEvent, useEffect, useState } from 'react';
+import { Head, router } from '@inertiajs/react';
+import { Search, Calendar, Package2, FolderTree, Moon, Sun, Menu, X } from 'lucide-react';
+import React, { KeyboardEvent, MouseEvent, useEffect, useRef, useState } from 'react';
 
 interface WebPropsLayout {
     children: React.ReactNode;
@@ -9,17 +9,49 @@ interface WebPropsLayout {
     onSearch?: (query: string) => void;
 }
 
+interface SearchResult {
+    id: number;
+    title: string;
+    type: 'category' | 'product' | 'schedule';
+    slug?: string;
+    image?: string;
+}
+
 type Theme = 'dark' | 'light';
 export default function WebLayouts({ children, title, onSearch }: WebPropsLayout) {
     const [searchValue, setSearchValue] = useState<string>('');
+    const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+    const [isSearching, setIsSearching] = useState<boolean>(false);
+    const [showResults, setShowResults] = useState<boolean>(false);
     const [menuOpen, setMenuOpen] = useState<boolean>(false);
     const [theme, setTheme] = useState<Theme>('light');
+    const searchRef = useRef<HTMLDivElement>(null);
+    
+    // Handle clicks outside the search component
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+                setShowResults(false);
+            }
+        }
+        
+        document.addEventListener('mousedown', handleClickOutside as unknown as EventListener);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside as unknown as EventListener);
+        };
+    }, [searchRef]);
 
     // Handle theme toggle
     const toggleTheme = () => {
         const newTheme = theme === 'light' ? 'dark' : 'light';
         setTheme(newTheme);
-        localStorage.setTheme('theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        
+        if (newTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
     };
 
     // Load theme from localStorage on mount
@@ -27,184 +59,413 @@ export default function WebLayouts({ children, title, onSearch }: WebPropsLayout
         const savedTheme = localStorage.getItem('theme') as Theme | null;
         if (savedTheme) {
             setTheme(savedTheme);
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            // Set dark mode based on system preference if no saved theme
+            setTheme('dark');
+            document.documentElement.classList.add('dark');
         }
     }, []);
 
-    // Update document class for theme
-    useEffect(() => {
-        document.documentElement.className = theme;
-    }, [theme]);
+    // Function to fetch search results
+    const fetchSearchResults = async (query: string) => {
+        if (!query.trim()) {
+            setSearchResults([]);
+            return;
+        }
+        
+        setIsSearching(true);
+        
+        try {
+            // Generate mock results based on the query for development/testing
+            const mockResults: SearchResult[] = [];
+            
+            // Always add some category results
+            mockResults.push({
+                id: 1,
+                title: `Category: ${query}`,
+                type: 'category'
+            });
+            mockResults.push({
+                id: 2,
+                title: 'Web Development',
+                type: 'category'
+            });
+            
+            // Always add some project results
+            mockResults.push({
+                id: 101,
+                title: `Project: ${query}`,
+                type: 'product',
+                slug: query.toLowerCase().replace(/\s+/g, '-')
+            });
+            mockResults.push({
+                id: 102,
+                title: 'E-Commerce Platform',
+                type: 'product',
+                slug: 'e-commerce-platform'
+            });
+            
+            // Always add some schedule results
+            mockResults.push({
+                id: 201,
+                title: `Event: ${query}`,
+                type: 'schedule'
+            });
+            mockResults.push({
+                id: 202,
+                title: 'Team Meeting',
+                type: 'schedule'
+            });
+            
+            // Set the results after a small delay to simulate network request
+            setTimeout(() => {
+                setSearchResults(mockResults);
+                setIsSearching(false);
+            }, 300);
+        } catch (error) {
+            console.error('Search error:', error);
+            setSearchResults([]);
+            setIsSearching(false);
+        }
+    };
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+        const value = e.target.value;
+        setSearchValue(value);
+        
+        if (value.length >= 2) {
+            fetchSearchResults(value);
+            setShowResults(true);
+        } else {
+            setSearchResults([]);
+            setShowResults(false);
+        }
+    };
 
     const handleSearchSubmit = (e: MouseEvent<HTMLButtonElement> | KeyboardEvent<HTMLInputElement>): void => {
         e.preventDefault();
-        // Handle search logic here
-        console.log('Searching for:', searchValue);
-
+        
+        if (!searchValue.trim()) return;
+        
+        // Close search results
+        setShowResults(false);
+        
+        // Redirect to search results page
+        router.visit(route('browse', { search: searchValue }));
+        
         if (onSearch) {
             onSearch(searchValue);
         }
     };
+    
+    const handleResultClick = (result: SearchResult): void => {
+        setShowResults(false);
+        
+        switch (result.type) {
+            case 'category':
+                router.visit(route('browse', { category: result.id }));
+                break;
+            case 'product':
+                router.visit(route('showProyek', result.slug));
+                break;
+            case 'schedule':
+                router.visit(route('showJadwal', result.id));
+                break;
+        }
+    };
 
     return (
-        <>
+        <div className="min-h-screen flex flex-col transition-colors duration-200 bg-gray-50 dark:bg-gray-900">
             <Head title={title} />
-            <nav className="flex flex-wrap items-center justify-between bg-white px-6 py-3 shadow-md">
-                {/* Theme Toggle Button */}
+            
+            {/* Header */}
+            <header className="sticky top-0 z-50 backdrop-blur-md bg-white/90 dark:bg-gray-800/90 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <nav className="flex items-center justify-between h-16">
+                        {/* Logo and brand */}
+                        <div className="flex items-center flex-shrink-0">
+                            <a href={route('home')} className="flex items-center space-x-2">
+                                <Natz />
+                            </a>
+                        </div>
+                        
+                        {/* Desktop Navigation */}
+                        <div className="hidden md:flex md:items-center md:justify-between md:flex-1 ml-10">
+                            {/* Search bar */}
+                            <div className="w-full max-w-md relative" ref={searchRef}>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        placeholder="Search for projects, categories, schedules..."
+                                        value={searchValue}
+                                        onChange={handleSearchChange}
+                                        className="w-full rounded-md border-gray-300 pl-10 pr-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+                                        onKeyPress={(e) => {
+                                            if (e.key === 'Enter') {
+                                                handleSearchSubmit(e);
+                                            }
+                                        }}
+                                    />
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Search size={16} className="text-gray-400 dark:text-gray-500" />
+                                    </div>
+                                    <button
+                                        onClick={handleSearchSubmit}
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
+                                    >
+                                        <span className="text-xs font-medium mr-1 hidden sm:inline">Search</span>
+                                    </button>
+                                    
+                                    {/* Search Results Dropdown */}
+                                    {showResults && (
+                                        <div className="absolute z-50 mt-1 w-full rounded-md bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                            {isSearching ? (
+                                                <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+                                                    Searching...
+                                                </div>
+                                            ) : searchResults.length > 0 ? (
+                                                <ul className="max-h-80 overflow-y-auto">
+                                                    {searchResults.map((result) => (
+                                                        <li key={`${result.type}-${result.id}`} className="border-b border-gray-100 dark:border-gray-700 last:border-0">
+                                                            <button
+                                                                className="flex w-full items-center px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                                                onClick={() => handleResultClick(result)}
+                                                            >
+                                                                <div className="flex-shrink-0 mr-3">
+                                                                    {result.type === 'category' && (
+                                                                        <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-full">
+                                                                            <FolderTree size={16} className="text-blue-600 dark:text-blue-300" />
+                                                                        </div>
+                                                                    )}
+                                                                    {result.type === 'product' && (
+                                                                        <div className="bg-emerald-100 dark:bg-emerald-900 p-2 rounded-full">
+                                                                            <Package2 size={16} className="text-emerald-600 dark:text-emerald-300" />
+                                                                        </div>
+                                                                    )}
+                                                                    {result.type === 'schedule' && (
+                                                                        <div className="bg-orange-100 dark:bg-orange-900 p-2 rounded-full">
+                                                                            <Calendar size={16} className="text-orange-600 dark:text-orange-300" />
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                                <div>
+                                                                    <div className="font-medium text-gray-900 dark:text-white">{result.title}</div>
+                                                                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                                        {result.type === 'category' ? 'Category' : 
+                                                                         result.type === 'product' ? 'Project' : 'Schedule'}
+                                                                    </div>
+                                                                </div>
+                                                            </button>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            ) : searchValue.length >= 2 ? (
+                                                <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+                                                    No results found
+                                                </div>
+                                            ) : null}
+                                            
+                                            {searchValue.length >= 2 && (
+                                                <div className="border-t border-gray-100 dark:border-gray-700 p-2">
+                                                    <button
+                                                        onClick={handleSearchSubmit as React.MouseEventHandler}
+                                                        className="flex w-full items-center justify-center rounded-md bg-indigo-50 dark:bg-indigo-900/30 px-4 py-2 text-sm text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+                                                    >
+                                                        <Search size={16} className="mr-2" />
+                                                        Search for "{searchValue}"
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            
+                            {/* Desktop menu */}
+                            <div className="hidden md:block ml-6">
+                                <ul className="flex items-center space-x-6 font-medium">
+                                    <li>
+                                        <a href={route('home')} className="text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                            Home
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href={route('browse')} className="text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                            Projects
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#" className="text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                            Schedule
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#" className="text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                            Contact
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <button
+                                            onClick={toggleTheme}
+                                            className="p-2 rounded-full text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                            aria-label="Toggle theme"
+                                        >
+                                            {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        {/* Mobile menu button */}
+                        <div className="flex md:hidden items-center space-x-3">
+                            <button
+                                onClick={toggleTheme}
+                                className="p-2 rounded-full text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                aria-label="Toggle theme"
+                            >
+                                {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+                            </button>
+                            <button
+                                onClick={() => setMenuOpen(!menuOpen)}
+                                className="p-2 rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                aria-label="Toggle Menu"
+                            >
+                                {menuOpen ? <X size={24} /> : <Menu size={24} />}
+                            </button>
+                        </div>
+                    </nav>
+                </div>
+            </header>
 
-                <div className="z-20 flex items-center">
-                    {/* Logo */}
-                    <Natz />
-                </div>
-                {/* Hamburger menu for mobile */}
-                <button
-                    className="z-20 flex items-center rounded border border-gray-400 px-3 py-2 text-gray-700 md:hidden"
-                    onClick={() => setMenuOpen(!menuOpen)}
-                    aria-label="Toggle Menu"
-                >
-                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                </button>
-                {/* Search bar for desktop */}
-                <div className="mx-4 hidden w-full max-w-md flex-1 md:block">
-                    <div className="relative">
-                        <input
-                            type="text"
-                            placeholder="Cari..."
-                            value={searchValue}
-                            onChange={(e) => setSearchValue(e.target.value)}
-                            className="w-full rounded-lg border border-gray-300 px-4 py-2 pr-10 focus:border-transparent focus:ring-2 focus:ring-red-500 focus:outline-none"
-                            onKeyPress={(e) => {
-                                if (e.key === 'Enter') {
-                                    handleSearchSubmit(e);
-                                }
-                            }}
-                        />
-                        <button
-                            onClick={handleSearchSubmit}
-                            className="absolute top-1/2 right-2 -translate-y-1/2 transform text-gray-500 hover:text-red-600"
-                        >
-                            <Search size={20} />
-                        </button>
-                    </div>
-                </div>
-                {/* Desktop menu */}
-                <ul className="z-20 hidden items-center space-x-6 font-medium text-gray-700 md:flex">
-                    <li>
-                        <a href="#" className="transition-colors hover:text-red-600">
-                            Home
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" className="transition-colors hover:text-red-600">
-                            About
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" className="transition-colors hover:text-red-600">
-                            Services
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" className="transition-colors hover:text-red-600">
-                            Contact
-                        </a>
-                    </li>
-                </ul>
-                {/* Mobile menu overlay */}
-                {menuOpen && <div className="bg-opacity-40 fixed inset-0 z-10 bg-black md:hidden" onClick={() => setMenuOpen(false)}></div>}
-                {/* Mobile menu */}
-                <div
-                    className={`fixed top-0 right-0 z-30 h-full w-64 transform bg-white shadow-lg ${menuOpen ? 'translate-x-0' : 'translate-x-full'} flex flex-col transition-transform duration-300 md:hidden`}
-                >
-                    <button className="m-4 self-end" onClick={() => setMenuOpen(false)} aria-label="Close Menu">
-                        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6l12 12M6 18L18 6" />
-                        </svg>
-                    </button>
+            {/* Mobile menu */}
+            <div className={`
+                fixed inset-0 z-40 transition-all duration-300 ease-in-out
+                ${menuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
+            `}>
+                {/* Backdrop */}
+                <div 
+                    className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300
+                    ${menuOpen ? 'opacity-100' : 'opacity-0'}`} 
+                    onClick={() => setMenuOpen(false)}
+                />
+                
+                {/* Menu panel */}
+                <div className={`
+                    absolute top-0 right-0 w-full max-w-xs h-full bg-white dark:bg-gray-800 shadow-xl
+                    transform transition-transform duration-300 ease-in-out
+                    ${menuOpen ? 'translate-x-0' : 'translate-x-full'}
+                `}>
                     {/* Search bar for mobile */}
-                    <div className="mb-4 px-6">
+                    <div className="px-5 py-6">
                         <div className="relative">
                             <input
                                 type="text"
-                                placeholder="Cari..."
+                                placeholder="Search..."
                                 value={searchValue}
-                                onChange={(e) => setSearchValue(e.target.value)}
-                                className="w-full rounded-lg border border-gray-300 px-4 py-2 pr-10 focus:border-transparent focus:ring-2 focus:ring-red-500 focus:outline-none"
+                                onChange={handleSearchChange}
+                                className="w-full rounded-md border-gray-300 pl-10 pr-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                                 onKeyPress={(e) => {
                                     if (e.key === 'Enter') {
                                         handleSearchSubmit(e);
+                                        setMenuOpen(false);
                                     }
                                 }}
                             />
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <Search size={16} className="text-gray-400 dark:text-gray-500" />
+                            </div>
                             <button
-                                onClick={handleSearchSubmit}
-                                className="absolute top-1/2 right-2 -translate-y-1/2 transform text-gray-500 hover:text-red-600"
+                                onClick={(e) => {
+                                    handleSearchSubmit(e);
+                                    setMenuOpen(false);
+                                }}
+                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
                             >
-                                <Search size={20} />
+                                <span className="text-xs font-medium">Search</span>
                             </button>
                         </div>
                     </div>
-                    <ul className="flex flex-col space-y-4 px-6 font-medium text-gray-700">
-                        <li>
-                            <a href="#" className="transition-colors hover:text-red-600" onClick={() => setMenuOpen(false)}>
-                                Home
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#" className="transition-colors hover:text-red-600" onClick={() => setMenuOpen(false)}>
-                                About
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#" className="transition-colors hover:text-red-600" onClick={() => setMenuOpen(false)}>
-                                Services
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#" className="transition-colors hover:text-red-600" onClick={() => setMenuOpen(false)}>
-                                Contact
-                            </a>
-                        </li>
-                    </ul>
+                    
+                    {/* Navigation links */}
+                    <div className="border-t border-gray-200 dark:border-gray-700">
+                        <nav className="px-5 py-6">
+                            <ul className="space-y-6">
+                                <li>
+                                    <a 
+                                        href={route('home')} 
+                                        className="flex items-center text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" 
+                                        onClick={() => setMenuOpen(false)}
+                                    >
+                                        Home
+                                    </a>
+                                </li>
+                                <li>
+                                    <a 
+                                        href={route('browse')} 
+                                        className="flex items-center text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" 
+                                        onClick={() => setMenuOpen(false)}
+                                    >
+                                        Projects
+                                    </a>
+                                </li>
+                                <li>
+                                    <a 
+                                        href="#" 
+                                        className="flex items-center text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" 
+                                        onClick={() => setMenuOpen(false)}
+                                    >
+                                        Schedule
+                                    </a>
+                                </li>
+                                <li>
+                                    <a 
+                                        href="#" 
+                                        className="flex items-center text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" 
+                                        onClick={() => setMenuOpen(false)}
+                                    >
+                                        Contact
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
                 </div>
-            </nav>
-            {children}
-            <footer className="mt-10 w-full bg-gray-100 py-6 text-center shadow-inner">
-                <div className="container mx-auto flex flex-col items-center justify-between px-4 md:flex-row">
-                    <p className="text-sm text-gray-600">&copy; {new Date().getFullYear()} MyWebsite. All rights reserved.</p>
-                    <div className="mt-2 flex space-x-4 md:mt-0">
-                        <a href="#" className="text-gray-500 transition-colors hover:text-red-600">
-                            Privacy Policy
-                        </a>
-                        <a href="#" className="text-gray-500 transition-colors hover:text-red-600">
-                            Terms of Service
-                        </a>
+            </div>
+            
+            {/* Main content */}
+            <main className="flex-grow">
+                {children}
+            </main>
+            
+            {/* Footer */}
+            <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div className="flex flex-col md:flex-row items-center justify-between">
+                        <div className="mb-4 md:mb-0">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                &copy; {new Date().getFullYear()} ProyekManagement. All rights reserved.
+                            </p>
+                        </div>
+                        <div className="flex space-x-6">
+                            <a href="#" className="text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                Privacy Policy
+                            </a>
+                            <a href="#" className="text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                Terms of Service
+                            </a>
+                            <a href="#" className="text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                Support
+                            </a>
+                        </div>
                     </div>
                 </div>
             </footer>
-            <div className="fixed bottom-4 right-4 z-50">
-                <button
-                    onClick={toggleTheme}
-                    className="rounded-full bg-gray-200 p-2 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
-                    aria-label="Toggle theme"
-                >
-                    {theme === 'light' ? (
-                        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
-                        </svg>
-                    ) : (
-                        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-                            />
-                        </svg>
-                    )}
-                </button>
-            </div>
-        </>
+        </div>
     );
 }
