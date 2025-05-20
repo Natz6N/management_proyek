@@ -3,11 +3,20 @@
 namespace App\Services;
 
 use App\Models\JadwalProyek;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-class JadwalProyekService
+class JadwalProyekService extends BaseService
 {
+    /**
+     * Create a new service instance.
+     */
+    public function __construct()
+    {
+        $this->model = new JadwalProyek();
+    }
+
     /**
      * Get all schedules
      *
@@ -33,9 +42,9 @@ class JadwalProyekService
      * Find schedule by ID
      *
      * @param int $id
-     * @return JadwalProyek|null
+     * @return Model|null
      */
-    public function findById(int $id): ?JadwalProyek
+    public function findById(int $id): ?Model
     {
         return JadwalProyek::find($id);
     }
@@ -44,9 +53,9 @@ class JadwalProyekService
      * Create a new schedule
      *
      * @param array $data
-     * @return JadwalProyek
+     * @return Model
      */
-    public function create(array $data): JadwalProyek
+    public function create(array $data): Model
     {
         return JadwalProyek::create($data);
     }
@@ -56,14 +65,14 @@ class JadwalProyekService
      *
      * @param int $id
      * @param array $data
-     * @return JadwalProyek|null
+     * @return Model
      */
-    public function update(int $id, array $data): ?JadwalProyek
+    public function update(int $id, array $data): Model
     {
         $jadwal = $this->findById($id);
 
         if (!$jadwal) {
-            return null;
+            throw new \Illuminate\Database\Eloquent\ModelNotFoundException("Schedule with ID {$id} not found");
         }
 
         $jadwal->update($data);
@@ -81,7 +90,7 @@ class JadwalProyekService
         $jadwal = $this->findById($id);
 
         if (!$jadwal) {
-            return false;
+            throw new \Illuminate\Database\Eloquent\ModelNotFoundException("Schedule with ID {$id} not found");
         }
 
         return $jadwal->delete();
@@ -114,9 +123,9 @@ class JadwalProyekService
      * Get schedule with its project
      *
      * @param int $id
-     * @return JadwalProyek|null
+     * @return Model|null
      */
-    public function getWithProyek(int $id): ?JadwalProyek
+    public function getWithProyek(int $id): ?Model
     {
         return JadwalProyek::with('proyek')->find($id);
     }
@@ -147,5 +156,31 @@ class JadwalProyekService
         return JadwalProyek::whereBetween('start_time', [$startDate, $endDate])
             ->orWhereBetween('end_time', [$startDate, $endDate])
             ->get();
+    }
+
+    /**
+     * Get upcoming events with project information
+     *
+     * @param int $limit
+     * @return Collection
+     */
+    public function getUpcomingEvents(int $limit = 5): Collection
+    {
+        return JadwalProyek::with('proyek')
+            ->where('start_time', '>=', now())
+            ->orderBy('start_time')
+            ->limit($limit)
+            ->get();
+    }
+
+    /**
+     * Find schedule by ID with project relation
+     *
+     * @param int $id
+     * @return Model|null
+     */
+    public function findWithProyek(int $id): ?Model
+    {
+        return JadwalProyek::with('proyek')->find($id);
     }
 }

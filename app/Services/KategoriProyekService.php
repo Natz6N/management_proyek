@@ -3,11 +3,20 @@
 namespace App\Services;
 
 use App\Models\KategoriProyek;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-class KategoriProyekService
+class KategoriProyekService extends BaseService
 {
+    /**
+     * Create a new service instance.
+     */
+    public function __construct()
+    {
+        $this->model = new KategoriProyek();
+    }
+
     /**
      * Get all project categories
      *
@@ -35,7 +44,7 @@ class KategoriProyekService
      * @param int $id
      * @return KategoriProyek|null
      */
-    public function findById(int $id): ?KategoriProyek
+    public function findById(int $id): ?Model
     {
         return KategoriProyek::find($id);
     }
@@ -46,7 +55,7 @@ class KategoriProyekService
      * @param array $data
      * @return KategoriProyek
      */
-    public function create(array $data): KategoriProyek
+    public function create(array $data): Model
     {
         return KategoriProyek::create($data);
     }
@@ -56,14 +65,14 @@ class KategoriProyekService
      *
      * @param int $id
      * @param array $data
-     * @return KategoriProyek|null
+     * @return Model
      */
-    public function update(int $id, array $data): ?KategoriProyek
+    public function update(int $id, array $data): Model
     {
         $kategori = $this->findById($id);
 
         if (!$kategori) {
-            return null;
+            throw new \Illuminate\Database\Eloquent\ModelNotFoundException("Category with ID {$id} not found");
         }
 
         $kategori->update($data);
@@ -81,7 +90,7 @@ class KategoriProyekService
         $kategori = $this->findById($id);
 
         if (!$kategori) {
-            return false;
+            throw new \Illuminate\Database\Eloquent\ModelNotFoundException("Category with ID {$id} not found");
         }
 
         return $kategori->delete();
@@ -93,7 +102,7 @@ class KategoriProyekService
      * @param int $id
      * @return KategoriProyek|null
      */
-    public function getWithProyek(int $id): ?KategoriProyek
+    public function getWithProyek(int $id): ?Model
     {
         return KategoriProyek::with('proyek')->find($id);
     }

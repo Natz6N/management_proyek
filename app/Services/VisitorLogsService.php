@@ -3,11 +3,37 @@
 namespace App\Services;
 
 use App\Models\VisitorLogs;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-class VisitorLogsService
+class VisitorLogsService extends BaseService
 {
+    /**
+     * Create a new service instance.
+     */
+    public function __construct()
+    {
+        $this->model = new VisitorLogs();
+    }
+
+    /**
+     * Get visitor statistics
+     *
+     * @return array
+     */
+    public function getStatistics(): array
+    {
+        return [
+            'total' => VisitorLogs::count(),
+            'today' => VisitorLogs::whereDate('visited_at', today())->count(),
+            'week' => VisitorLogs::where('visited_at', '>=', now()->subDays(7))->count(),
+            'month' => VisitorLogs::where('visited_at', '>=', now()->subDays(30))->count(),
+            'by_path' => $this->getVisitorCountByPath(),
+            'by_date' => $this->getVisitorCountByDate()
+        ];
+    }
+
     /**
      * Get all visitor logs
      *
@@ -33,9 +59,9 @@ class VisitorLogsService
      * Find visitor log by ID
      *
      * @param int $id
-     * @return VisitorLogs|null
+     * @return Model|null
      */
-    public function findById(int $id): ?VisitorLogs
+    public function findById(int $id): ?Model
     {
         return VisitorLogs::find($id);
     }
@@ -44,9 +70,9 @@ class VisitorLogsService
      * Create a new visitor log
      *
      * @param array $data
-     * @return VisitorLogs
+     * @return Model
      */
-    public function create(array $data): VisitorLogs
+    public function create(array $data): Model
     {
         return VisitorLogs::create($data);
     }
@@ -56,14 +82,14 @@ class VisitorLogsService
      *
      * @param int $id
      * @param array $data
-     * @return VisitorLogs|null
+     * @return Model
      */
-    public function update(int $id, array $data): ?VisitorLogs
+    public function update(int $id, array $data): Model
     {
         $log = $this->findById($id);
 
         if (!$log) {
-            return null;
+            throw new \Illuminate\Database\Eloquent\ModelNotFoundException("Visitor log with ID {$id} not found");
         }
 
         $log->update($data);
@@ -81,7 +107,7 @@ class VisitorLogsService
         $log = $this->findById($id);
 
         if (!$log) {
-            return false;
+            throw new \Illuminate\Database\Eloquent\ModelNotFoundException("Visitor log with ID {$id} not found");
         }
 
         return $log->delete();
@@ -92,9 +118,9 @@ class VisitorLogsService
      *
      * @param string $path
      * @param int|null $userId
-     * @return VisitorLogs
+     * @return Model
      */
-    public function logVisit(string $path, ?int $userId = null): VisitorLogs
+    public function logVisit(string $path, ?int $userId = null): Model
     {
         return $this->create([
             'path' => $path,
@@ -147,9 +173,9 @@ class VisitorLogsService
      * Get log with its user
      *
      * @param int $id
-     * @return VisitorLogs|null
+     * @return Model|null
      */
-    public function getWithUser(int $id): ?VisitorLogs
+    public function getWithUser(int $id): ?Model
     {
         return VisitorLogs::with('user')->find($id);
     }

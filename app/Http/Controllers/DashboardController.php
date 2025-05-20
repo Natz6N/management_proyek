@@ -15,103 +15,341 @@ use App\Facades\KomentarProyekFacade as KomentarProyek;
 class DashboardController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display dashboard overview.
      */
     public function index()
     {
         $proyeks = Proyek::all();
+        $categories = KategoriProyek::all();
+        $schedules = Jadwal::getUpcomingEvents();
+        $visitorStats = VisitorLog::getStatistics();
+
         return Inertia::render('Dashboard/Index', [
+            'proyeks' => $proyeks,
+            'categories' => $categories,
+            'schedules' => $schedules,
+            'visitorStats' => $visitorStats
+        ]);
+    }
+
+    /**
+     * PROJECT MANAGEMENT
+     */
+
+    /**
+     * Display a listing of projects.
+     */
+    public function projectIndex()
+    {
+        $proyeks = Proyek::all();
+        return Inertia::render('Dashboard/Proyek/index', [
             'proyeks' => $proyeks
         ]);
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Show the form for creating a new project.
      */
-    public function create()
+    public function projectCreate()
     {
         $categories = KategoriProyek::all();
-        return Inertia::render('Dashboard/Create', [
+        return Inertia::render('Dashboard/Proyek/Create', [
             'categories' => $categories
         ]);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created project in storage.
      */
-    public function store(Request $request)
+    public function projectStore(Request $request)
     {
-        // Use StoreproyekRequest if validation rules are filled
-        // $validated = $request->validated();
         $data = $request->only([
             'judul', 'image', 'slug', 'link', 'deskripsi', 'kategori_proyek_id', 'start_date', 'end_date'
         ]);
+
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image');
         }
+
         $proyek = Proyek::create($data);
 
-        return redirect()->route('dashboard.index')->with('success', 'Proyek berhasil dibuat');
+        return redirect()->route('dashboard.projects.index')->with('success', 'Proyek berhasil dibuat');
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified project.
      */
-    public function show($id)
+    public function projectShow($id)
     {
         $proyek = Proyek::findWithAllRelations($id);
+
         if (!$proyek) {
-            return redirect()->route('dashboard.index')->with('error', 'Proyek tidak ditemukan');
+            return redirect()->route('dashboard.projects.index')->with('error', 'Proyek tidak ditemukan');
         }
 
-        return Inertia::render('Dashboard/Show', [
+        return Inertia::render('Dashboard/Proyek/show', [
             'proyek' => $proyek
         ]);
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Show the form for editing the specified project.
      */
-    public function edit($id)
+    public function projectEdit($id)
     {
         $proyek = Proyek::findWithKategori($id);
+
         if (!$proyek) {
-            return redirect()->route('dashboard.index')->with('error', 'Proyek tidak ditemukan');
+            return redirect()->route('dashboard.projects.index')->with('error', 'Proyek tidak ditemukan');
         }
 
         $categories = KategoriProyek::all();
 
-        return Inertia::render('Dashboard/Edit', [
+        return Inertia::render('Dashboard/Proyek/Edit', [
             'proyek' => $proyek,
             'categories' => $categories
         ]);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified project in storage.
      */
-    public function update(Request $request, $id)
+    public function projectUpdate(Request $request, $id)
     {
-        // Use UpdateproyekRequest if validation rules are filled
-        // $validated = $request->validated();
         $data = $request->only([
             'judul', 'image', 'slug', 'link', 'deskripsi', 'kategori_proyek_id', 'start_date', 'end_date'
         ]);
+
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image');
         }
+
         $proyek = Proyek::update($id, $data);
 
-        return redirect()->route('dashboard.show', $id)->with('success', 'Proyek berhasil diupdate');
+        return redirect()->route('dashboard.projects.show', $id)->with('success', 'Proyek berhasil diupdate');
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified project from storage.
      */
-    public function destroy($id)
+    public function projectDestroy($id)
     {
         $deleted = Proyek::delete($id);
 
-        return redirect()->route('dashboard.index')->with('success', 'Proyek berhasil dihapus');
+        return redirect()->route('dashboard.projects.index')->with('success', 'Proyek berhasil dihapus');
+    }
+
+    /**
+     * CATEGORY MANAGEMENT
+     */
+
+    /**
+     * Display a listing of categories.
+     */
+    public function categoryIndex()
+    {
+        $categories = KategoriProyek::all();
+        return Inertia::render('Dashboard/Category/Index', [
+            'categories' => $categories
+        ]);
+    }
+
+    /**
+     * Show the form for creating a new category.
+     */
+    public function categoryCreate()
+    {
+        return Inertia::render('Dashboard/Category/Create');
+    }
+
+    /**
+     * Store a newly created category in storage.
+     */
+    public function categoryStore(Request $request)
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'slug' => 'nullable|string|max:255',
+        ]);
+
+        $category = KategoriProyek::create($data);
+
+        return redirect()->route('dashboard.categories.index')->with('success', 'Kategori berhasil dibuat');
+    }
+
+    /**
+     * Display the specified category.
+     */
+    public function categoryShow($id)
+    {
+        $category = KategoriProyek::find($id);
+
+        if (!$category) {
+            return redirect()->route('dashboard.categories.index')->with('error', 'Kategori tidak ditemukan');
+        }
+
+        $proyeks = Proyek::getByKategori($id);
+
+        return Inertia::render('Dashboard/Category/Show', [
+            'category' => $category,
+            'proyeks' => $proyeks
+        ]);
+    }
+
+    /**
+     * Show the form for editing the specified category.
+     */
+    public function categoryEdit($id)
+    {
+        $category = KategoriProyek::find($id);
+
+        if (!$category) {
+            return redirect()->route('dashboard.categories.index')->with('error', 'Kategori tidak ditemukan');
+        }
+
+        return Inertia::render('Dashboard/Category/Edit', [
+            'category' => $category
+        ]);
+    }
+
+    /**
+     * Update the specified category in storage.
+     */
+    public function categoryUpdate(Request $request, $id)
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'slug' => 'nullable|string|max:255',
+        ]);
+
+        $category = KategoriProyek::update($id, $data);
+
+        return redirect()->route('dashboard.categories.index')->with('success', 'Kategori berhasil diupdate');
+    }
+
+    /**
+     * Remove the specified category from storage.
+     */
+    public function categoryDestroy($id)
+    {
+        // Check if there are any projects using this category
+        $proyeks = Proyek::getByKategori($id);
+
+        if (count($proyeks) > 0) {
+            return redirect()->route('dashboard.categories.index')->with('error', 'Kategori tidak dapat dihapus karena masih digunakan oleh proyek');
+        }
+
+        $deleted = KategoriProyek::delete($id);
+
+        return redirect()->route('dashboard.categories.index')->with('success', 'Kategori berhasil dihapus');
+    }
+
+    /**
+     * SCHEDULE MANAGEMENT
+     */
+
+    /**
+     * Display a listing of schedules.
+     */
+    public function scheduleIndex()
+    {
+        $schedules = Jadwal::all();
+        return Inertia::render('Dashboard/Schedule/Index', [
+            'schedules' => $schedules
+        ]);
+    }
+
+    /**
+     * Show the form for creating a new schedule.
+     */
+    public function scheduleCreate()
+    {
+        $proyeks = Proyek::all();
+        return Inertia::render('Dashboard/Schedule/Create', [
+            'proyeks' => $proyeks
+        ]);
+    }
+
+    /**
+     * Store a newly created schedule in storage.
+     */
+    public function scheduleStore(Request $request)
+    {
+        $data = $request->validate([
+            'judul' => 'required|string|max:255',
+            'deskripsi' => 'nullable|string',
+            'proyek_id' => 'required|integer|exists:proyeks,id',
+            'tanggal' => 'required|date',
+            'status' => 'required|string|in:pending,in_progress,completed'
+        ]);
+
+        $schedule = Jadwal::create($data);
+
+        return redirect()->route('dashboard.schedules.index')->with('success', 'Jadwal berhasil dibuat');
+    }
+
+    /**
+     * Display the specified schedule.
+     */
+    public function scheduleShow($id)
+    {
+        $schedule = Jadwal::findWithProyek($id);
+
+        if (!$schedule) {
+            return redirect()->route('dashboard.schedules.index')->with('error', 'Jadwal tidak ditemukan');
+        }
+
+        return Inertia::render('Dashboard/Schedule/Show', [
+            'schedule' => $schedule
+        ]);
+    }
+
+    /**
+     * Show the form for editing the specified schedule.
+     */
+    public function scheduleEdit($id)
+    {
+        $schedule = Jadwal::findWithProyek($id);
+
+        if (!$schedule) {
+            return redirect()->route('dashboard.schedules.index')->with('error', 'Jadwal tidak ditemukan');
+        }
+
+        $proyeks = Proyek::all();
+
+        return Inertia::render('Dashboard/Schedule/Edit', [
+            'schedule' => $schedule,
+            'proyeks' => $proyeks
+        ]);
+    }
+
+    /**
+     * Update the specified schedule in storage.
+     */
+    public function scheduleUpdate(Request $request, $id)
+    {
+        $data = $request->validate([
+            'judul' => 'required|string|max:255',
+            'deskripsi' => 'nullable|string',
+            'proyek_id' => 'required|integer|exists:proyeks,id',
+            'tanggal' => 'required|date',
+            'status' => 'required|string|in:pending,in_progress,completed'
+        ]);
+
+        $schedule = Jadwal::update($id, $data);
+
+        return redirect()->route('dashboard.schedules.index')->with('success', 'Jadwal berhasil diupdate');
+    }
+
+    /**
+     * Remove the specified schedule from storage.
+     */
+    public function scheduleDestroy($id)
+    {
+        $deleted = Jadwal::delete($id);
+
+        return redirect()->route('dashboard.schedules.index')->with('success', 'Jadwal berhasil dihapus');
     }
 }

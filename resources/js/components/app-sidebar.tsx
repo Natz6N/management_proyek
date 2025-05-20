@@ -10,7 +10,22 @@ import AppLogo from './app-logo';
 const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
-        href: '/dashboard',
+        href: route('dashboard'),
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Proyek',
+        href: route('dashboard.projects.index'),
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Kategori',
+        href: route('dashboard.categories.index'),
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Jadwal',
+        href: route('dashboard.schedules.index'),
         icon: LayoutGrid,
     },
 ];

@@ -4,13 +4,21 @@ namespace App\Services;
 
 use App\Models\Proyek;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
-class ProyekService
+class ProyekService extends BaseService
 {
+    /**
+     * Create a new service instance.
+     */
+    public function __construct()
+    {
+        $this->model = new Proyek();
+    }
+
     /**
      * Create a new proyek with image handling
      *
