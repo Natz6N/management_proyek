@@ -4,8 +4,8 @@ import { Head, Link } from '@inertiajs/react';
 
 interface Category {
     id: number;
-    name: string;
-    description?: string;
+    nama: string;
+    deskripsi?: string;
     slug?: string;
     created_at?: string;
     updated_at?: string;
@@ -27,11 +27,6 @@ export default function Index({ categories }: IndexProps) {
             href: '/dashboard/categories',
         },
     ];
-
-    const formatDate = (dateString?: string) => {
-        if (!dateString) return '-';
-        return new Date(dateString).toLocaleDateString();
-    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -74,13 +69,13 @@ export default function Index({ categories }: IndexProps) {
                                                 {category.id}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                                                {category.name}
+                                                {category.nama}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                {category.description ?
-                                                    (category.description.length > 50 ?
-                                                        `${category.description.substring(0, 50)}...` :
-                                                        category.description)
+                                                {category.deskripsi ?
+                                                    (category.deskripsi.length > 50 ?
+                                                        `${category.deskripsi.substring(0, 50)}...` :
+                                                        category.deskripsi)
                                                     : '-'}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">

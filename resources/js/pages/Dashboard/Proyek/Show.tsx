@@ -4,7 +4,7 @@ import { Head, Link } from '@inertiajs/react';
 
 interface Kategori {
     id: number;
-    name: string;
+    nama: string;
 }
 
 interface Jadwal {
@@ -242,7 +242,7 @@ export default function Show({ proyek }: ShowProps) {
                                         href={`/dashboard/categories/${proyek.kategori_proyek_id}`}
                                         className="mt-1 text-blue-600 dark:text-blue-400 hover:underline"
                                     >
-                                        {proyek.kategori?.name || 'Uncategorized'}
+                                        {proyek.kategori?.nama || 'Uncategorized'}
                                     </Link>
                                 </div>
 

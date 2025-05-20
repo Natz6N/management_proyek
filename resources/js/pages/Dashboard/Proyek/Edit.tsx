@@ -1,6 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, useForm, Link } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 
 interface Category {
     id: number;
@@ -36,6 +37,23 @@ export default function Edit({ proyek, categories }: EditProps) {
         image: null as File | null,
         _method: 'PUT'
     });
+
+    // Track whether the slug was manually edited
+    const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+
+    // Auto-generate slug from title if not manually edited
+    useEffect(() => {
+        if (data.judul && !slugManuallyEdited) {
+            const slug = data.judul
+                .toLowerCase()
+                .replace(/[^\w\s-]/g, '') // Remove special characters
+                .replace(/\s+/g, '-') // Replace spaces with hyphens
+                .replace(/--+/g, '-') // Replace multiple hyphens with single hyphen
+                .trim();
+
+            setData('slug', slug);
+        }
+    }, [data.judul]);
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -102,10 +120,13 @@ export default function Edit({ proyek, categories }: EditProps) {
                                 id="slug"
                                 type="text"
                                 value={data.slug}
-                                onChange={(e) => setData('slug', e.target.value)}
+                                onChange={(e) => {
+                                    setData('slug', e.target.value);
+                                    setSlugManuallyEdited(true);
+                                }}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
                             />
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Leave empty to auto-generate from title</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Automatically generated from title (you can edit manually)</p>
                             {errors.slug && <div className="text-red-500 text-sm mt-1">{errors.slug}</div>}
                         </div>
 

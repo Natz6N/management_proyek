@@ -149,7 +149,7 @@ class DashboardController extends Controller
     public function categoryIndex()
     {
         $categories = KategoriProyek::all();
-        return Inertia::render('Dashboard/Category/Index', [
+        return Inertia::render('Dashboard/kategori/Index', [
             'categories' => $categories
         ]);
     }
@@ -159,7 +159,7 @@ class DashboardController extends Controller
      */
     public function categoryCreate()
     {
-        return Inertia::render('Dashboard/Category/Create');
+        return Inertia::render('Dashboard/kategori/Create');
     }
 
     /**
@@ -168,8 +168,8 @@ class DashboardController extends Controller
     public function categoryStore(Request $request)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'nama' => 'required|string|max:255',
+            'deskripsi' => 'nullable|string',
             'slug' => 'nullable|string|max:255',
         ]);
 
@@ -191,7 +191,7 @@ class DashboardController extends Controller
 
         $proyeks = Proyek::getByKategori($id);
 
-        return Inertia::render('Dashboard/Category/Show', [
+        return Inertia::render('Dashboard/kategori/Show', [
             'category' => $category,
             'proyeks' => $proyeks
         ]);
@@ -208,7 +208,7 @@ class DashboardController extends Controller
             return redirect()->route('dashboard.categories.index')->with('error', 'Kategori tidak ditemukan');
         }
 
-        return Inertia::render('Dashboard/Category/Edit', [
+        return Inertia::render('Dashboard/kategori/Edit', [
             'category' => $category
         ]);
     }
@@ -219,8 +219,8 @@ class DashboardController extends Controller
     public function categoryUpdate(Request $request, $id)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'nama' => 'required|string|max:255',
+            'deskripsi' => 'nullable|string',
             'slug' => 'nullable|string|max:255',
         ]);
 
@@ -256,7 +256,7 @@ class DashboardController extends Controller
     public function scheduleIndex()
     {
         $schedules = Jadwal::all();
-        return Inertia::render('Dashboard/Schedule/Index', [
+        return Inertia::render('Dashboard/jadwal/Index', [
             'schedules' => $schedules
         ]);
     }
@@ -267,7 +267,7 @@ class DashboardController extends Controller
     public function scheduleCreate()
     {
         $proyeks = Proyek::all();
-        return Inertia::render('Dashboard/Schedule/Create', [
+        return Inertia::render('Dashboard/jadwal/Create', [
             'proyeks' => $proyeks
         ]);
     }
@@ -301,7 +301,7 @@ class DashboardController extends Controller
             return redirect()->route('dashboard.schedules.index')->with('error', 'Jadwal tidak ditemukan');
         }
 
-        return Inertia::render('Dashboard/Schedule/Show', [
+        return Inertia::render('Dashboard/jadwal/Show', [
             'schedule' => $schedule
         ]);
     }
@@ -319,7 +319,7 @@ class DashboardController extends Controller
 
         $proyeks = Proyek::all();
 
-        return Inertia::render('Dashboard/Schedule/Edit', [
+        return Inertia::render('Dashboard/jadwal/Edit', [
             'schedule' => $schedule,
             'proyeks' => $proyeks
         ]);

@@ -24,6 +24,7 @@ class KategoriProyek extends Model
     protected $fillable = [
         'nama',
         'deskripsi',
+        'slug',
     ];
 
     /**
