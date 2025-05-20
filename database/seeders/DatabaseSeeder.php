@@ -24,5 +24,13 @@ class DatabaseSeeder extends Seeder
             'email_verified_at' => now(),
             'password' => Hash::make('password'),
         ]);
+            User::create([
+            'name' => 'user',
+            'username' => 'user',
+            'email' => 'user@gmail.com',
+            'role' => 'user',
+            'email_verified_at' => now(),
+            'password' => Hash::make('password'),
+        ]);
     }
 }

@@ -155,4 +155,75 @@ class ProyekService extends BaseService
     {
         return Proyek::where('kategori_proyek_id', $kategoriId)->paginate($perPage);
     }
+
+    /**
+     * Get featured projects for the homepage
+     *
+     * @param int $limit
+     * @return Collection
+     */
+    public function getFeatured(int $limit = 6): Collection
+    {
+        return Proyek::with('kategori')
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->get();
+    }
+
+    /**
+     * Get projects filtered by category and/or search term
+     *
+     * @param string|null $kategoriId
+     * @param string|null $search
+     * @param int $perPage
+     * @return LengthAwarePaginator
+     */
+    public function getAllWithFilter(?string $kategoriId = null, ?string $search = null, int $perPage = 12): LengthAwarePaginator
+    {
+        $query = Proyek::with('kategori');
+
+        if ($kategoriId) {
+            $query->where('kategori_proyek_id', $kategoriId);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('judul', 'like', "%{$search}%")
+                  ->orWhere('deskripsi', 'like', "%{$search}%");
+            });
+        }
+
+        return $query->orderBy('created_at', 'desc')->paginate($perPage);
+    }
+
+    /**
+     * Get project by slug with its category relation
+     *
+     * @param string $slug
+     * @return Proyek|null
+     */
+    public function getBySlug(string $slug): ?Proyek
+    {
+        return Proyek::with('kategori')
+            ->where('slug', $slug)
+            ->first();
+    }
+
+    /**
+     * Get related projects
+     *
+     * @param int $currentId Project to exclude
+     * @param int $kategoriId Category to match
+     * @param int $limit
+     * @return Collection
+     */
+    public function getRelated(int $currentId, int $kategoriId, int $limit = 3): Collection
+    {
+        return Proyek::with('kategori')
+            ->where('kategori_proyek_id', $kategoriId)
+            ->where('id', '!=', $currentId)
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->get();
+    }
 }

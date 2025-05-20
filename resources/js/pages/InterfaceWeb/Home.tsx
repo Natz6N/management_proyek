@@ -1,6 +1,6 @@
 import WebLayouts from '@/layouts/web-layout';
 import { Jadwal, KategoriProyek, Proyek } from '@/types';
-import React, {  useState } from 'react';
+import React, { useState } from 'react';
 // Import Swiper React components
 import { Swiper, SwiperSlide } from 'swiper/react';
 
@@ -12,13 +12,13 @@ import 'swiper/css/pagination';
 import { Pagination, Autoplay } from 'swiper/modules';
 
 interface HomeProps {
-    title: string;
-    proyekList: Proyek[];
-    kategoriList: KategoriProyek[];
-    jadwalList: Jadwal[];
+    title?: string;
+    featuredProyeks: Proyek[];
+    categories: KategoriProyek[];
+    upcomingEvents: Jadwal[];
 }
 
-export default function Home({ title, proyekList, kategoriList, jadwalList }: HomeProps) {
+export default function Home({ title = 'Home', featuredProyeks, categories, upcomingEvents }: HomeProps) {
     const [activeTab, setActiveTab] = useState('all');
 
     // Testimonial data
@@ -51,8 +51,8 @@ export default function Home({ title, proyekList, kategoriList, jadwalList }: Ho
 
     // Filter projects by category if needed
     const filteredProjects = activeTab === 'all'
-        ? proyekList
-        : proyekList.filter(project => project.kategori_proyek_id.toString() === activeTab);
+        ? featuredProyeks
+        : featuredProyeks.filter(project => project.kategori_proyek_id.toString() === activeTab);
 
     return (
         <WebLayouts title={title}>
@@ -98,7 +98,7 @@ export default function Home({ title, proyekList, kategoriList, jadwalList }: Ho
                             </p>
                         </div>
 
-                        {proyekList.length > 0 ? (
+                        {featuredProyeks.length > 0 ? (
                             <Swiper
                                 slidesPerView={1}
                                 spaceBetween={30}
@@ -123,7 +123,7 @@ export default function Home({ title, proyekList, kategoriList, jadwalList }: Ho
                                 modules={[Pagination, Autoplay]}
                                 className="mySwiper"
                             >
-                                {proyekList.map((proyek) => (
+                                {featuredProyeks.map((proyek) => (
                                     <SwiperSlide key={proyek.id}>
                                         <div className="bg-white rounded-lg shadow-lg overflow-hidden h-full flex flex-col">
                                             <div className="h-48 bg-gray-200">
@@ -138,9 +138,9 @@ export default function Home({ title, proyekList, kategoriList, jadwalList }: Ho
                                                 <p className="text-gray-600 mb-4 flex-1">{proyek.deskripsi}</p>
                                                 <div className="flex justify-between items-center mt-auto">
                                                     <span className="bg-red-100 text-red-600 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                                        {kategoriList.find(k => k.id === proyek.kategori_proyek_id)?.nama || 'Uncategorized'}
+                                                        {categories.find(k => k.id === proyek.kategori_proyek_id)?.nama || 'Uncategorized'}
                                                     </span>
-                                                    <a href={`/proyek/${proyek.id}`} className="text-sm font-medium text-red-600 hover:text-red-800">
+                                                    <a href={route('showProyek', proyek.slug)} className="text-sm font-medium text-red-600 hover:text-red-800">
                                                         Detail →
                                                     </a>
                                                 </div>
@@ -179,7 +179,7 @@ export default function Home({ title, proyekList, kategoriList, jadwalList }: Ho
                             >
                                 Semua
                             </button>
-                            {kategoriList.map((kategori) => (
+                            {categories.map((kategori) => (
                                 <button
                                     key={kategori.id}
                                     onClick={() => setActiveTab(kategori.id.toString())}
@@ -211,9 +211,9 @@ export default function Home({ title, proyekList, kategoriList, jadwalList }: Ho
                                             <p className="text-gray-600 text-sm mb-3 line-clamp-2">{proyek.deskripsi}</p>
                                             <div className="flex justify-between items-center">
                                                 <span className="bg-red-100 text-red-600 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                                    {kategoriList.find(k => k.id === proyek.kategori_proyek_id)?.nama || 'Uncategorized'}
+                                                    {categories.find(k => k.id === proyek.kategori_proyek_id)?.nama || 'Uncategorized'}
                                                 </span>
-                                                <a href={`/proyek/${proyek.id}`} className="text-sm font-medium text-red-600 hover:text-red-800">
+                                                <a href={route('showProyek', proyek.slug)} className="text-sm font-medium text-red-600 hover:text-red-800">
                                                     Detail →
                                                 </a>
                                             </div>
@@ -230,13 +230,13 @@ export default function Home({ title, proyekList, kategoriList, jadwalList }: Ho
                 </section>
 
                 {/* Auto load page kategori & proyek */}
-                <section>
+                <section className="container mx-auto px-4 py-16">
                     <h2 className="mb-4 text-2xl font-semibold text-gray-700">Kategori Proyek</h2>
                     <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                        {kategoriList.length > 0 ? (
-                            kategoriList.map((kategori) => (
+                        {categories.length > 0 ? (
+                            categories.map((kategori) => (
                                 <div key={kategori.id} className="rounded-lg bg-white p-4 text-center shadow">
-                                    <span className="font-medium text-gray-800">Kategori #{kategori.id}</span>
+                                    <span className="font-medium text-gray-800">{kategori.nama}</span>
                                 </div>
                             ))
                         ) : (
@@ -328,7 +328,7 @@ export default function Home({ title, proyekList, kategoriList, jadwalList }: Ho
 
                                 <div className="p-8 md:w-2/3">
                                     <h3 className="text-2xl font-bold text-gray-800 mb-6">Kirim Pesan</h3>
-                                    <form>
+                                    <form method="POST">
                                         <div className="mb-4">
                                             <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="name">
                                                 Nama Lengkap
@@ -337,7 +337,9 @@ export default function Home({ title, proyekList, kategoriList, jadwalList }: Ho
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent"
                                                 type="text"
                                                 id="name"
+                                                name="name"
                                                 placeholder="Nama Anda"
+                                                required
                                             />
                                         </div>
 
@@ -349,7 +351,22 @@ export default function Home({ title, proyekList, kategoriList, jadwalList }: Ho
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent"
                                                 type="email"
                                                 id="email"
+                                                name="email"
                                                 placeholder="email@example.com"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className="mb-4">
+                                            <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="subject">
+                                                Subject
+                                            </label>
+                                            <input
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent"
+                                                type="text"
+                                                id="subject"
+                                                name="subject"
+                                                placeholder="Subject pesan"
                                             />
                                         </div>
 
@@ -360,8 +377,10 @@ export default function Home({ title, proyekList, kategoriList, jadwalList }: Ho
                                             <textarea
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent"
                                                 id="message"
+                                                name="message"
                                                 rows={4}
                                                 placeholder="Tulis pesan Anda disini..."
+                                                required
                                             ></textarea>
                                         </div>
 
@@ -379,7 +398,7 @@ export default function Home({ title, proyekList, kategoriList, jadwalList }: Ho
                 </section>
 
                 {/* Jadwal proyek baru  */}
-                <section>
+                <section className="container mx-auto px-4 py-16">
                     <h2 className="mb-4 text-2xl font-semibold text-gray-700">Jadwal Proyek</h2>
                     <div className="overflow-x-auto">
                         <table className="min-w-full rounded-xl bg-white shadow">
@@ -389,21 +408,30 @@ export default function Home({ title, proyekList, kategoriList, jadwalList }: Ho
                                     <th className="px-4 py-2 text-left">Deskripsi</th>
                                     <th className="px-4 py-2 text-left">Mulai</th>
                                     <th className="px-4 py-2 text-left">Selesai</th>
+                                    <th className="px-4 py-2 text-left">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {jadwalList.length > 0 ? (
-                                    jadwalList.map((jadwal) => (
+                                {upcomingEvents.length > 0 ? (
+                                    upcomingEvents.map((jadwal) => (
                                         <tr key={jadwal.id} className="border-b last:border-none">
                                             <td className="px-4 py-2">{jadwal.nama}</td>
                                             <td className="px-4 py-2">{jadwal.deskripsi || '-'}</td>
                                             <td className="px-4 py-2">{jadwal.start_time}</td>
                                             <td className="px-4 py-2">{jadwal.end_time || '-'}</td>
+                                            <td className="px-4 py-2">
+                                                <a
+                                                    href={route('showJadwal', jadwal.id)}
+                                                    className="text-sm font-medium text-red-600 hover:text-red-800"
+                                                >
+                                                    Detail →
+                                                </a>
+                                            </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={4} className="py-4 text-center text-gray-500">
+                                        <td colSpan={5} className="py-4 text-center text-gray-500">
                                             Belum ada jadwal.
                                         </td>
                                     </tr>

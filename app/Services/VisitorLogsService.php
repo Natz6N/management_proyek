@@ -130,6 +130,33 @@ class VisitorLogsService extends BaseService
     }
 
     /**
+     * Record a page visit with metadata
+     *
+     * @param string $page Page identifier
+     * @param array $metadata Additional metadata about the visit
+     * @return Model
+     */
+    public function recordVisit(string $page, array $metadata = []): Model
+    {
+        // Get authenticated user if exists
+        $userId = auth()->id();
+
+        // Get IP address and user agent
+        $ip = request()->ip();
+        $userAgent = request()->userAgent();
+
+        // Create log entry
+        return $this->create([
+            'path' => $page,
+            'user_id' => $userId,
+            'ip_address' => $ip,
+            'user_agent' => $userAgent,
+            'metadata' => json_encode($metadata),
+            'visited_at' => now(),
+        ]);
+    }
+
+    /**
      * Get logs by user ID
      *
      * @param int $userId

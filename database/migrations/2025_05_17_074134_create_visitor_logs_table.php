@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
@@ -15,6 +15,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
             $table->string('path')->nullable();
+            $table->string('ip_address')->nullable();
+            $table->text('user_agent')->nullable();
+            $table->json('metadata')->nullable();
             $table->timestamp('visited_at')->useCurrent();
             $table->timestamps();
         });

@@ -24,6 +24,9 @@ class VisitorLogs extends Model
     protected $fillable = [
         'user_id',
         'path',
+        'ip_address',
+        'user_agent',
+        'metadata',
         'visited_at',
     ];
 
@@ -34,6 +37,7 @@ class VisitorLogs extends Model
      */
     protected $casts = [
         'visited_at' => 'datetime',
+        'metadata' => 'array',
     ];
 
     /**
