@@ -53,7 +53,7 @@ class WebController extends Controller
         // Log visitor
         VisitorLog::recordVisit('browse', ['category' => $kategoriId, 'search' => $search]);
 
-        return Inertia::render('InterfaceWeb/Browse', [
+        return Inertia::render('InterfaceWeb/BrowseNew', [
             'proyeks' => $proyeks,
             'categories' => $categories,
             'filters' => [
@@ -195,5 +195,31 @@ class WebController extends Controller
         ];
 
         return response()->json($formattedResults);
+    }
+
+    /**
+     * API endpoint for filtered projects with pagination
+     * Used for real-time search in the browse page
+     */
+    public function getFilteredProjects(Request $request)
+    {
+        $kategoriId = $request->input('category');
+        $search = $request->input('search');
+        $page = $request->input('page', 1);
+        $perPage = $request->input('per_page', 6);
+
+        // Get projects with pagination
+        $proyeks = Proyek::getAllWithFilter($kategoriId, $search, $perPage);
+
+        // Return JSON response with projects and pagination data
+        return response()->json([
+            'proyeks' => $proyeks->items(),
+            'pagination' => [
+                'current_page' => $proyeks->currentPage(),
+                'last_page' => $proyeks->lastPage(),
+                'per_page' => $proyeks->perPage(),
+                'total' => $proyeks->total()
+            ]
+        ]);
     }
 }

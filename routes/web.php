@@ -55,6 +55,7 @@ Route::post('/contact', [WebController::class, 'contact'])->name('contact');
 
 // API for search functionality
 Route::get('/api/search', [WebController::class, 'search'])->name('api.search');
+Route::get('/api/projects', [WebController::class, 'getFilteredProjects'])->name('api.projects');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
