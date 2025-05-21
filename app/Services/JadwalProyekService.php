@@ -183,4 +183,19 @@ class JadwalProyekService extends BaseService
     {
         return JadwalProyek::with('proyek')->find($id);
     }
+
+    /**
+     * Search for schedules by title or description
+     *
+     * @param string $query The search query
+     * @param int $limit Maximum number of results to return
+     * @return Collection
+     */
+    public function search(string $query, int $limit = 6): Collection
+    {
+        return JadwalProyek::where('nama', 'like', "%{$query}%")
+            ->orWhere('deskripsi', 'like', "%{$query}%")
+            ->limit($limit)
+            ->get();
+    }
 }

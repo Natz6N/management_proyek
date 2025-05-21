@@ -198,31 +198,34 @@ class ProyekService extends BaseService
 
     /**
      * Get project by slug with its category relation
-     *
-     * @param string $slug
-     * @return Proyek|null
      */
     public function getBySlug(string $slug): ?Proyek
     {
-        return Proyek::with('kategori')
-            ->where('slug', $slug)
-            ->first();
+        return Proyek::with('kategori')->where('slug', $slug)->first();
     }
 
     /**
      * Get related projects
-     *
-     * @param int $currentId Project to exclude
-     * @param int $kategoriId Category to match
-     * @param int $limit
-     * @return Collection
      */
     public function getRelated(int $currentId, int $kategoriId, int $limit = 3): Collection
     {
-        return Proyek::with('kategori')
+        return Proyek::where('id', '!=', $currentId)
             ->where('kategori_proyek_id', $kategoriId)
-            ->where('id', '!=', $currentId)
-            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->get();
+    }
+
+    /**
+     * Search for projects by title, description or other relevant fields
+     *
+     * @param string $query The search query
+     * @param int $limit Maximum number of results to return
+     * @return Collection
+     */
+    public function search(string $query, int $limit = 6): Collection
+    {
+        return Proyek::where('judul', 'like', "%{$query}%")
+            ->orWhere('deskripsi', 'like', "%{$query}%")
             ->limit($limit)
             ->get();
     }

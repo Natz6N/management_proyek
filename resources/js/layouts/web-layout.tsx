@@ -2,6 +2,7 @@ import Natz from '@/components/ui/natzLogo';
 import { Head, router } from '@inertiajs/react';
 import { Search, Calendar, Package2, FolderTree, Moon, Sun, Menu, X } from 'lucide-react';
 import React, { KeyboardEvent, MouseEvent, useEffect, useRef, useState } from 'react';
+import axios from 'axios';
 
 interface WebPropsLayout {
     children: React.ReactNode;
@@ -15,6 +16,35 @@ interface SearchResult {
     type: 'category' | 'product' | 'schedule';
     slug?: string;
     image?: string;
+    date?: string;
+}
+
+interface CategoryResult {
+    id: number;
+    title: string;
+    type: 'category';
+    slug: string | null;
+}
+
+interface ProjectResult {
+    id: number;
+    title: string;
+    type: 'product';
+    slug: string;
+    image: string;
+}
+
+interface ScheduleResult {
+    id: number;
+    title: string;
+    type: 'schedule';
+    date: string;
+}
+
+interface SearchApiResponse {
+    categories: CategoryResult[];
+    projects: ProjectResult[];
+    schedules: ScheduleResult[];
 }
 
 type Theme = 'dark' | 'light';
@@ -26,7 +56,7 @@ export default function WebLayouts({ children, title, onSearch }: WebPropsLayout
     const [menuOpen, setMenuOpen] = useState<boolean>(false);
     const [theme, setTheme] = useState<Theme>('light');
     const searchRef = useRef<HTMLDivElement>(null);
-    
+
     // Handle clicks outside the search component
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -34,7 +64,7 @@ export default function WebLayouts({ children, title, onSearch }: WebPropsLayout
                 setShowResults(false);
             }
         }
-        
+
         document.addEventListener('mousedown', handleClickOutside as unknown as EventListener);
         return () => {
             document.removeEventListener('mousedown', handleClickOutside as unknown as EventListener);
@@ -46,7 +76,7 @@ export default function WebLayouts({ children, title, onSearch }: WebPropsLayout
         const newTheme = theme === 'light' ? 'dark' : 'light';
         setTheme(newTheme);
         localStorage.setItem('theme', newTheme);
-        
+
         if (newTheme === 'dark') {
             document.documentElement.classList.add('dark');
         } else {
@@ -77,56 +107,47 @@ export default function WebLayouts({ children, title, onSearch }: WebPropsLayout
             setSearchResults([]);
             return;
         }
-        
+
         setIsSearching(true);
-        
+
         try {
-            // Generate mock results based on the query for development/testing
-            const mockResults: SearchResult[] = [];
-            
-            // Always add some category results
-            mockResults.push({
-                id: 1,
-                title: `Category: ${query}`,
-                type: 'category'
+            // Call the API endpoint
+            const response = await axios.get<SearchApiResponse>('/api/search', {
+                params: { query, limit: 6 }
             });
-            mockResults.push({
-                id: 2,
-                title: 'Web Development',
-                type: 'category'
-            });
-            
-            // Always add some project results
-            mockResults.push({
-                id: 101,
-                title: `Project: ${query}`,
-                type: 'product',
-                slug: query.toLowerCase().replace(/\s+/g, '-')
-            });
-            mockResults.push({
-                id: 102,
-                title: 'E-Commerce Platform',
-                type: 'product',
-                slug: 'e-commerce-platform'
-            });
-            
-            // Always add some schedule results
-            mockResults.push({
-                id: 201,
-                title: `Event: ${query}`,
-                type: 'schedule'
-            });
-            mockResults.push({
-                id: 202,
-                title: 'Team Meeting',
-                type: 'schedule'
-            });
-            
-            // Set the results after a small delay to simulate network request
-            setTimeout(() => {
-                setSearchResults(mockResults);
-                setIsSearching(false);
-            }, 300);
+
+            const data = response.data;
+
+            // Transform API results into the format we need
+            const formattedResults: SearchResult[] = [
+                // Format category results
+                ...data.categories.map((category) => ({
+                    id: category.id,
+                    title: category.title,
+                    type: 'category' as const,
+                    slug: category.slug || undefined
+                })),
+
+                // Format project results
+                ...data.projects.map((project) => ({
+                    id: project.id,
+                    title: project.title,
+                    type: 'product' as const,
+                    slug: project.slug,
+                    image: project.image
+                })),
+
+                // Format schedule results
+                ...data.schedules.map((schedule) => ({
+                    id: schedule.id,
+                    title: schedule.title,
+                    type: 'schedule' as const,
+                    date: schedule.date
+                }))
+            ];
+
+            setSearchResults(formattedResults);
+            setIsSearching(false);
         } catch (error) {
             console.error('Search error:', error);
             setSearchResults([]);
@@ -137,7 +158,7 @@ export default function WebLayouts({ children, title, onSearch }: WebPropsLayout
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
         const value = e.target.value;
         setSearchValue(value);
-        
+
         if (value.length >= 2) {
             fetchSearchResults(value);
             setShowResults(true);
@@ -149,23 +170,23 @@ export default function WebLayouts({ children, title, onSearch }: WebPropsLayout
 
     const handleSearchSubmit = (e: MouseEvent<HTMLButtonElement> | KeyboardEvent<HTMLInputElement>): void => {
         e.preventDefault();
-        
+
         if (!searchValue.trim()) return;
-        
+
         // Close search results
         setShowResults(false);
-        
+
         // Redirect to search results page
         router.visit(route('browse', { search: searchValue }));
-        
+
         if (onSearch) {
             onSearch(searchValue);
         }
     };
-    
+
     const handleResultClick = (result: SearchResult): void => {
         setShowResults(false);
-        
+
         switch (result.type) {
             case 'category':
                 router.visit(route('browse', { category: result.id }));
@@ -182,7 +203,7 @@ export default function WebLayouts({ children, title, onSearch }: WebPropsLayout
     return (
         <div className="min-h-screen flex flex-col transition-colors duration-200 bg-gray-50 dark:bg-gray-900">
             <Head title={title} />
-            
+
             {/* Header */}
             <header className="sticky top-0 z-50 backdrop-blur-md bg-white/90 dark:bg-gray-800/90 border-b border-gray-200 dark:border-gray-700 shadow-sm">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -193,7 +214,7 @@ export default function WebLayouts({ children, title, onSearch }: WebPropsLayout
                                 <Natz />
                             </a>
                         </div>
-                        
+
                         {/* Desktop Navigation */}
                         <div className="hidden md:flex md:items-center md:justify-between md:flex-1 ml-10">
                             {/* Search bar */}
@@ -220,7 +241,7 @@ export default function WebLayouts({ children, title, onSearch }: WebPropsLayout
                                     >
                                         <span className="text-xs font-medium mr-1 hidden sm:inline">Search</span>
                                     </button>
-                                    
+
                                     {/* Search Results Dropdown */}
                                     {showResults && (
                                         <div className="absolute z-50 mt-1 w-full rounded-md bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -256,8 +277,9 @@ export default function WebLayouts({ children, title, onSearch }: WebPropsLayout
                                                                 <div>
                                                                     <div className="font-medium text-gray-900 dark:text-white">{result.title}</div>
                                                                     <div className="text-xs text-gray-500 dark:text-gray-400">
-                                                                        {result.type === 'category' ? 'Category' : 
-                                                                         result.type === 'product' ? 'Project' : 'Schedule'}
+                                                                        {result.type === 'category' ? 'Category' :
+                                                                         result.type === 'product' ? 'Project' :
+                                                                         `Schedule${result.date ? ` - ${new Date(result.date).toLocaleDateString()}` : ''}`}
                                                                     </div>
                                                                 </div>
                                                             </button>
@@ -269,7 +291,7 @@ export default function WebLayouts({ children, title, onSearch }: WebPropsLayout
                                                     No results found
                                                 </div>
                                             ) : null}
-                                            
+
                                             {searchValue.length >= 2 && (
                                                 <div className="border-t border-gray-100 dark:border-gray-700 p-2">
                                                     <button
@@ -285,7 +307,7 @@ export default function WebLayouts({ children, title, onSearch }: WebPropsLayout
                                     )}
                                 </div>
                             </div>
-                            
+
                             {/* Desktop menu */}
                             <div className="hidden md:block ml-6">
                                 <ul className="flex items-center space-x-6 font-medium">
@@ -321,7 +343,7 @@ export default function WebLayouts({ children, title, onSearch }: WebPropsLayout
                                 </ul>
                             </div>
                         </div>
-                        
+
                         {/* Mobile menu button */}
                         <div className="flex md:hidden items-center space-x-3">
                             <button
@@ -349,12 +371,12 @@ export default function WebLayouts({ children, title, onSearch }: WebPropsLayout
                 ${menuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
             `}>
                 {/* Backdrop */}
-                <div 
+                <div
                     className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300
-                    ${menuOpen ? 'opacity-100' : 'opacity-0'}`} 
+                    ${menuOpen ? 'opacity-100' : 'opacity-0'}`}
                     onClick={() => setMenuOpen(false)}
                 />
-                
+
                 {/* Menu panel */}
                 <div className={`
                     absolute top-0 right-0 w-full max-w-xs h-full bg-white dark:bg-gray-800 shadow-xl
@@ -391,42 +413,42 @@ export default function WebLayouts({ children, title, onSearch }: WebPropsLayout
                             </button>
                         </div>
                     </div>
-                    
+
                     {/* Navigation links */}
                     <div className="border-t border-gray-200 dark:border-gray-700">
                         <nav className="px-5 py-6">
                             <ul className="space-y-6">
                                 <li>
-                                    <a 
-                                        href={route('home')} 
-                                        className="flex items-center text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" 
+                                    <a
+                                        href={route('home')}
+                                        className="flex items-center text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                                         onClick={() => setMenuOpen(false)}
                                     >
                                         Home
                                     </a>
                                 </li>
                                 <li>
-                                    <a 
-                                        href={route('browse')} 
-                                        className="flex items-center text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" 
+                                    <a
+                                        href={route('browse')}
+                                        className="flex items-center text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                                         onClick={() => setMenuOpen(false)}
                                     >
                                         Projects
                                     </a>
                                 </li>
                                 <li>
-                                    <a 
-                                        href="#" 
-                                        className="flex items-center text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" 
+                                    <a
+                                        href="#"
+                                        className="flex items-center text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                                         onClick={() => setMenuOpen(false)}
                                     >
                                         Schedule
                                     </a>
                                 </li>
                                 <li>
-                                    <a 
-                                        href="#" 
-                                        className="flex items-center text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" 
+                                    <a
+                                        href="#"
+                                        className="flex items-center text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                                         onClick={() => setMenuOpen(false)}
                                     >
                                         Contact
@@ -437,12 +459,12 @@ export default function WebLayouts({ children, title, onSearch }: WebPropsLayout
                     </div>
                 </div>
             </div>
-            
+
             {/* Main content */}
             <main className="flex-grow">
                 {children}
             </main>
-            
+
             {/* Footer */}
             <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">

@@ -53,5 +53,8 @@ Route::get('/show/{slug}', [WebController::class, 'showProyek'])->name('showProy
 Route::get('/showjadwal/{id}', [WebController::class, 'showJadwal'])->name('showJadwal');
 Route::post('/contact', [WebController::class, 'contact'])->name('contact');
 
+// API for search functionality
+Route::get('/api/search', [WebController::class, 'search'])->name('api.search');
+
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

@@ -109,7 +109,7 @@ class KategoriProyekService extends BaseService
 
     /**
      * Get popular categories based on the number of projects
-     * 
+     *
      * @param int $limit
      * @return Collection
      */
@@ -120,7 +120,7 @@ class KategoriProyekService extends BaseService
             ->orderBy('proyek_count', 'desc')
             ->limit($limit)
             ->get();
-        
+
         // Alternative approach using visitor logs if implemented
         // return KategoriProyek::join('visitor_logs', function($join) {
         //     $join->on('kategori_proyeks.id', '=', 'visitor_logs.metadata->category_id')
@@ -131,5 +131,20 @@ class KategoriProyekService extends BaseService
         // ->orderBy('visits', 'desc')
         // ->limit($limit)
         // ->get();
+    }
+
+    /**
+     * Search for categories by name
+     *
+     * @param string $query The search query
+     * @param int $limit Maximum number of results to return
+     * @return Collection
+     */
+    public function search(string $query, int $limit = 6): Collection
+    {
+        return KategoriProyek::where('nama', 'like', "%{$query}%")
+            ->orWhere('deskripsi', 'like', "%{$query}%")
+            ->limit($limit)
+            ->get();
     }
 }

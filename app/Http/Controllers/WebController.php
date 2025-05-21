@@ -135,4 +135,65 @@ class WebController extends Controller
 
         return redirect()->back()->with('success', 'Your message has been sent successfully!');
     }
+
+    /**
+     * API Search functionality
+     * Searches across projects, categories, and schedules
+     */
+    public function search(Request $request)
+    {
+        // Get the search query
+        $query = $request->input('query');
+        $limit = $request->input('limit', 6);
+
+        if (!$query || strlen($query) < 2) {
+            return response()->json([
+                'categories' => [],
+                'projects' => [],
+                'schedules' => []
+            ]);
+        }
+
+        // Search for categories
+        $categories = KategoriProyek::search($query, $limit);
+
+        // Search for projects
+        $projects = Proyek::search($query, $limit);
+
+        // Search for schedules
+        $schedules = Jadwal::search($query, $limit);
+
+        // Format the results for the frontend
+        $formattedResults = [
+            'categories' => $categories->map(function($category) {
+                return [
+                    'id' => $category->id,
+                    'title' => $category->nama,
+                    'type' => 'category',
+                    'slug' => $category->slug ?? null,
+                ];
+            }),
+
+            'projects' => $projects->map(function($project) {
+                return [
+                    'id' => $project->id,
+                    'title' => $project->judul,
+                    'type' => 'product',
+                    'slug' => $project->slug,
+                    'image' => $project->image,
+                ];
+            }),
+
+            'schedules' => $schedules->map(function($schedule) {
+                return [
+                    'id' => $schedule->id,
+                    'title' => $schedule->nama,
+                    'type' => 'schedule',
+                    'date' => $schedule->start_time,
+                ];
+            }),
+        ];
+
+        return response()->json($formattedResults);
+    }
 }
